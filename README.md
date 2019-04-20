@@ -28,7 +28,7 @@ search the last created few seconds ago. the image number is the sha for the ima
 
 # docker push docker.io/your_user_dockerhub/filebeat_custom:latest
 
-one time you created you custom filebear image, go to root folder of project and  modify docker-compose.yml file
+one time you created you custom filebeat image, go to root folder of the project and  modify docker-compose.yml file
 
 and change the filebeat.image value for examample:
 
