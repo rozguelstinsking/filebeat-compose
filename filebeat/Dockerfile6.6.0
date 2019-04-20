@@ -1,0 +1,8 @@
+FROM docker.elastic.co/beats/filebeat:6.6.0
+COPY filebeat.yml /usr/share/filebeat/filebeat.yml
+COPY wait_elastic_kibana.sh /usr/share/filebeat/wait_elastic_kibana.sh
+USER root
+RUN chown root:filebeat /usr/share/filebeat/filebeat.yml && chmod go-w /usr/share/filebeat/filebeat.yml
+USER filebeat
+RUN ./wait_elastic_kibana.sh >> /dev/null &
+CMD ["filebeat"]

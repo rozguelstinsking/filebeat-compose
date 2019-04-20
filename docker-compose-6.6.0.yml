@@ -1,0 +1,84 @@
+version: '3.0'
+services:
+  filebeat:
+    depends_on:
+      - elasticsearch
+      - kibana
+    image: docker.io/rosker/filebeat_custom:6.6.0
+    container_name: filebeat
+    environment: 
+      - setup.kibana.host=kibana:5601 
+      - output.elasticsearch.hosts=["elasticsearch:9200"]
+      - output.logstash.enabled=false
+      - strict.perms=false
+      - WAIT_COMMAND=[ $$(curl --write-out %{http_code} --silent --output /dev/null elasticsearch:9200/_cat/health?h=st) ]
+      - REQUIREMENTS=requirements.txt
+      - WAIT_START_CMD=python /home/filebeat_config_custom/access_elasticsearch.py
+      - WAIT_SLEEP=3
+      - WAIT_LOOPS=100
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - "vol1:/home/testdata"
+      - "filebeat:/home/filebeat_config_custom"
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    command: sh /home/filebeat_config_custom/wait_elastic_kibana.sh
+    
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.0
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - vol1:/home/testdata
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+  elasticsearch_node:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.6.0
+    container_name: elasticsearch_node
+    environment:
+      - node.name=elasticsearch_node
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - vol1:/home/testdata2
+    
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.6.0
+    container_name: kibana
+    environment:
+      hosts: http://elasticsearch
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - vol2:/home/testdata2
+    ports:
+      - "5601:5601"
+  
+volumes:
+  vol1:
+    driver: local
+  vol2:
+    driver: local
+  filebeat:
+    driver: local
+
